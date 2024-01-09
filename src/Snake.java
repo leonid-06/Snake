@@ -1,22 +1,21 @@
 import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-
-import java.io.File;
 
 public class Snake extends Application {
     public static void main(String[] args) {
@@ -34,8 +33,12 @@ public class Snake extends Application {
     private Point FOOD;
     private final String[] IMAGE_FOODS = {"banana.png", "hamburger.png", "apple.png", "pizza.png", "pie.png"};
     private Image IMAGE_FOOD;
+    private Label label;
 
     private int score = 0;
+
+    Canvas canvas;
+    GraphicsContext context;
 
 
     private void drawField(GraphicsContext context){
@@ -132,14 +135,18 @@ public class Snake extends Application {
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Snake");
-        FlowPane pane = new FlowPane();
+        FlowPane pane = new FlowPane(10, 10);
         pane.setAlignment(Pos.CENTER);
+        pane.setOrientation(Orientation.VERTICAL);
         Scene scene = new Scene(pane, 900, 900);
+        label = new Label("Score: 0");
+        label.setFont(new Font(30));
+
 
         ///////Main logic///////
 
-        Canvas canvas = new Canvas(WIDTH, HEIGHT);
-        GraphicsContext context = canvas.getGraphicsContext2D();
+        canvas = new Canvas(WIDTH, HEIGHT);
+        context = canvas.getGraphicsContext2D();
 
         // generate snake body
         generateInitialSnake();
@@ -152,8 +159,35 @@ public class Snake extends Application {
         // generate direction
         generateInitialDirection();
 
-        KeyFrame frame = new KeyFrame(new Duration(300), e->{
+        KeyFrame frame = new KeyFrame(new Duration(300), businessLogic);
 
+        timeline = new Timeline(frame);
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
+
+        scene.setOnKeyPressed(trackKeyPress);
+
+        ///////Main logic///////
+
+        pane.getChildren().addAll(label, canvas);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+
+
+    private void showBody(){
+        for (Point point: SNAKE_BODY) {
+            System.out.println(point);
+        }
+        System.out.println("--------");
+    }
+
+
+
+    EventHandler<ActionEvent> businessLogic = new EventHandler<ActionEvent>() {
+        @Override
+        public void handle(ActionEvent event) {
             // check game over
             if (!isGameOver()) {
                 // draw field
@@ -174,51 +208,33 @@ public class Snake extends Application {
                     drawField(context);
                     drawFood(context);
                     drawSnake(context);
+                    label.setText("Score: "+score);
                 }
 
             } else {
                 gameOver();
             }
-
-        });
-
-        timeline = new Timeline(frame);
-        timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.play();
-
-        scene.setOnKeyPressed(trackKeyPress);
-        pane.getChildren().add(canvas);
-        ///////Main logic///////
-
-        primaryStage.setScene(scene);
-        primaryStage.show();
-    }
-
-    private void showBody(){
-        for (Point point: SNAKE_BODY) {
-            System.out.println(point);
         }
-        System.out.println("--------");
-    }
+    };
+
 
     EventHandler<KeyEvent> trackKeyPress = new EventHandler<KeyEvent>() {
         @Override
         public void handle(KeyEvent e) {
             String justDirection = e.getCode().toString();
-            switch (direction){
+            switch (justDirection){
                 case "LEFT":
-                    if (justDirection!="RIGHT") direction = justDirection;
+                    if (direction!="RIGHT") direction = justDirection;
                     break;
                 case "RIGHT":
-                    if (justDirection!="LEFT") direction = justDirection;
+                    if (direction!="LEFT") direction = justDirection;
                     break;
                 case "UP":
-                    if (justDirection!="DOWN") direction = justDirection;
+                    if (direction!="DOWN") direction = justDirection;
                     break;
                 case "DOWN":
-                    if (justDirection!="UP") direction = justDirection;
+                    if (direction!="UP") direction = justDirection;
                     break;
-
             }
         }
     };
@@ -255,6 +271,14 @@ public class Snake extends Application {
     }
 
     private boolean isEating(){
-        return FOOD.equals(SNAKE_HEAD);
+        if (FOOD.equals(SNAKE_HEAD)){
+            Point addedPart = new Point(-1,-1);
+            Point[] newBody = new Point[SNAKE_BODY.length+1];
+            System.arraycopy(SNAKE_BODY, 0, newBody, 0, SNAKE_BODY.length);
+            SNAKE_BODY = newBody;
+            SNAKE_BODY[SNAKE_BODY.length-1] = addedPart;
+            return true;
+        }
+        return false;
     }
 }
