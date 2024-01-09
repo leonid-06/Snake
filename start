@@ -1,3 +1,2 @@
-mkdir out
 javac -d out src/Point.java src/Snake.java
 java -cp out/ Snake

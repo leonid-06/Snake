@@ -8,12 +8,15 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import java.io.File;
 
 public class Snake extends Application {
     public static void main(String[] args) {
@@ -28,6 +31,12 @@ public class Snake extends Application {
     private Point SNAKE_HEAD;
     private String direction;
     private Timeline timeline;
+    private Point FOOD;
+    private final String[] IMAGE_FOODS = {"banana.png", "hamburger.png", "apple.png", "pizza.png", "pie.png"};
+    private Image IMAGE_FOOD;
+
+    private int score = 0;
+
 
     private void drawField(GraphicsContext context){
         for (int i = 0; i < COUNT_CELLS; i++) {
@@ -135,6 +144,11 @@ public class Snake extends Application {
         // generate snake body
         generateInitialSnake();
 
+        // generate FOOD Point
+        // draw food
+        generateFoodPoint();
+        drawFood(context);
+
         // generate direction
         generateInitialDirection();
 
@@ -145,11 +159,23 @@ public class Snake extends Application {
                 // draw field
                 drawField(context);
 
+                // draw food
+                drawFood(context);
+
                 // change position snake of body
                 move();
 
                 // draw snake
                 drawSnake(context);
+
+                if (isEating()){
+                    score++;
+                    generateFoodPoint();
+                    drawField(context);
+                    drawFood(context);
+                    drawSnake(context);
+                }
+
             } else {
                 gameOver();
             }
@@ -178,7 +204,22 @@ public class Snake extends Application {
     EventHandler<KeyEvent> trackKeyPress = new EventHandler<KeyEvent>() {
         @Override
         public void handle(KeyEvent e) {
-            direction = e.getCode().toString();
+            String justDirection = e.getCode().toString();
+            switch (direction){
+                case "LEFT":
+                    if (justDirection!="RIGHT") direction = justDirection;
+                    break;
+                case "RIGHT":
+                    if (justDirection!="LEFT") direction = justDirection;
+                    break;
+                case "UP":
+                    if (justDirection!="DOWN") direction = justDirection;
+                    break;
+                case "DOWN":
+                    if (justDirection!="UP") direction = justDirection;
+                    break;
+
+            }
         }
     };
 
@@ -186,7 +227,7 @@ public class Snake extends Application {
         boolean isContainHeadInBody = false;
         for (int i = 1; i < SNAKE_BODY.length; i++) {
             isContainHeadInBody = (SNAKE_BODY[i].equals(SNAKE_HEAD));
-        };
+        }
 
         return (SNAKE_HEAD.getX()>COUNT_CELLS
                 || SNAKE_HEAD.getX()<0
@@ -198,5 +239,22 @@ public class Snake extends Application {
 
     private void gameOver(){
         timeline.stop();
+    }
+
+    private void generateFoodPoint(){
+        FOOD = new Point(
+                 ((int) (Math.random()*COUNT_CELLS)),
+                 ((int) (Math.random()*COUNT_CELLS))
+        );
+        IMAGE_FOOD = new Image("file:pictures/"+ IMAGE_FOODS[((int) (Math.random()*IMAGE_FOODS.length))]);
+        System.out.println(FOOD);
+    }
+
+    private void drawFood(GraphicsContext context){
+        context.drawImage(IMAGE_FOOD, FOOD.getX()*SIZE_CELL, FOOD.getY()*SIZE_CELL, SIZE_CELL, SIZE_CELL);
+    }
+
+    private boolean isEating(){
+        return FOOD.equals(SNAKE_HEAD);
     }
 }
