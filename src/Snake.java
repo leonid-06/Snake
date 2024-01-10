@@ -11,11 +11,9 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -48,7 +46,6 @@ public class Snake extends Application {
 
     Canvas canvas;
     GraphicsContext context;
-
 
     private void drawField(GraphicsContext context){
         for (int i = 0; i < COUNT_CELLS; i++) {
@@ -183,6 +180,7 @@ public class Snake extends Application {
 
         scene.setOnKeyReleased(trackDoubleSpeed);
 
+
         restartButton.setOnAction(event->{
             score = 0;
             label.setText("Score: 0");
@@ -206,12 +204,6 @@ public class Snake extends Application {
         primaryStage.show();
     }
 
-    private void showBody(){
-        for (Point point: SNAKE_BODY) {
-            System.out.println(point);
-        }
-        System.out.println("--------");
-    }
 
     EventHandler<ActionEvent> businessLogic = new EventHandler<ActionEvent>() {
         @Override
@@ -253,26 +245,24 @@ public class Snake extends Application {
             if (justDirection.equals("SPACE") && !doubleSpeed){
                 doubleSpeed = true;
                 speed = 100;
-                frame = new KeyFrame(new Duration(speed), businessLogic);
-                timeline = new Timeline(frame);
-                timeline.setCycleCount(Timeline.INDEFINITE);
+                timeline.stop();
+
+                timeline.getKeyFrames().setAll(new KeyFrame(new Duration(speed), businessLogic));
                 timeline.play();
             }
 
-            System.out.println(timeline.getKeyFrames());
-
             switch (justDirection){
                 case "LEFT":
-                    if (direction!="RIGHT") direction = justDirection;
+                    if (!direction.equals("RIGHT")) direction = justDirection;
                     break;
                 case "RIGHT":
-                    if (direction!="LEFT") direction = justDirection;
+                    if (!direction.equals("LEFT")) direction = justDirection;
                     break;
                 case "UP":
-                    if (direction!="DOWN") direction = justDirection;
+                    if (!direction.equals("DOWN")) direction = justDirection;
                     break;
                 case "DOWN":
-                    if (direction!="UP") direction = justDirection;
+                    if (!direction.equals("UP")) direction = justDirection;
                     break;
             }
         }
@@ -282,18 +272,17 @@ public class Snake extends Application {
         @Override
         public void handle(KeyEvent event) {
             if (event.getCode().toString().equals("SPACE")){
-                System.out.println("DDDDDDDDDD");
                 speed = 250;
-                frame = new KeyFrame(new Duration(speed), businessLogic);
-                timeline.stop(); // Остановка текущей анимации
-                timeline.getKeyFrames().setAll(frame);
+                timeline.stop();
+
+                timeline.getKeyFrames().setAll(new KeyFrame(new Duration(speed), businessLogic));
+                timeline.play();
                 doubleSpeed = false;
             }
         }
     };
 
     private boolean isGameOver(){
-        boolean isContainHeadInBody = false;
         for (int i = 1; i < SNAKE_BODY.length; i++) {
             if (SNAKE_BODY[i].equals(SNAKE_HEAD)){
                 return true;
@@ -304,7 +293,6 @@ public class Snake extends Application {
                 || SNAKE_HEAD.getX()<0
                 || SNAKE_HEAD.getY()>=COUNT_CELLS
                 || SNAKE_HEAD.getY()<0
-                || isContainHeadInBody
                 );
     }
 
