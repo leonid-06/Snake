@@ -8,10 +8,14 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -34,6 +38,11 @@ public class Snake extends Application {
     private final String[] IMAGE_FOODS = {"banana.png", "hamburger.png", "apple.png", "pizza.png", "pie.png"};
     private Image IMAGE_FOOD;
     private Label label;
+    private Button restartButton;
+    private Label status;
+    private int speed = 250;
+    private KeyFrame frame;
+    private boolean doubleSpeed;
 
     private int score = 0;
 
@@ -60,6 +69,9 @@ public class Snake extends Application {
     }
 
     private void generateInitialSnake(){
+
+        SNAKE_BODY = new Point[5];
+
         SNAKE_BODY[0] = new Point(5, 2);
         SNAKE_BODY[1] = new Point(4, 2);
         SNAKE_BODY[2] = new Point(3, 2);
@@ -86,7 +98,7 @@ public class Snake extends Application {
                 30
         );
 
-        for (int i = 1; i < SNAKE_BODY.length; i++) {
+        for (int i = 1; i < SNAKE_BODY.length-1; i++) {
             context.setFill(Color.GREEN);
             context.fillRoundRect(
                     SNAKE_BODY[i].getX()*SIZE_CELL,
@@ -141,8 +153,10 @@ public class Snake extends Application {
         Scene scene = new Scene(pane, 900, 900);
         label = new Label("Score: 0");
         label.setFont(new Font(30));
-
-
+        restartButton = new Button("Restart");
+        restartButton.setFont(new Font(30));
+        status = new Label("IN GAME");
+        status.setFont(new Font(30));
         ///////Main logic///////
 
         canvas = new Canvas(WIDTH, HEIGHT);
@@ -151,30 +165,46 @@ public class Snake extends Application {
         // generate snake body
         generateInitialSnake();
 
+        // generate direction
+        generateInitialDirection();
+
         // generate FOOD Point
         // draw food
         generateFoodPoint();
         drawFood(context);
 
-        // generate direction
-        generateInitialDirection();
-
-        KeyFrame frame = new KeyFrame(new Duration(300), businessLogic);
-
+        frame = new KeyFrame(new Duration(speed), businessLogic);
         timeline = new Timeline(frame);
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
 
+
         scene.setOnKeyPressed(trackKeyPress);
+
+        scene.setOnKeyReleased(trackDoubleSpeed);
+
+        restartButton.setOnAction(event->{
+            score = 0;
+            label.setText("Score: 0");
+            generateInitialSnake();
+            generateInitialDirection();
+            generateFoodPoint();
+            timeline.playFromStart();
+        });
 
         ///////Main logic///////
 
-        pane.getChildren().addAll(label, canvas);
+        BorderPane box = new BorderPane();
+        box.setLeft(label);
+        box.setCenter(status);
+        box.setRight(restartButton);
+
+        restartButton.setFocusTraversable(false);
+
+        pane.getChildren().addAll(box, canvas);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-
-
 
     private void showBody(){
         for (Point point: SNAKE_BODY) {
@@ -182,8 +212,6 @@ public class Snake extends Application {
         }
         System.out.println("--------");
     }
-
-
 
     EventHandler<ActionEvent> businessLogic = new EventHandler<ActionEvent>() {
         @Override
@@ -217,11 +245,22 @@ public class Snake extends Application {
         }
     };
 
-
     EventHandler<KeyEvent> trackKeyPress = new EventHandler<KeyEvent>() {
         @Override
         public void handle(KeyEvent e) {
             String justDirection = e.getCode().toString();
+
+            if (justDirection.equals("SPACE") && !doubleSpeed){
+                doubleSpeed = true;
+                speed = 100;
+                frame = new KeyFrame(new Duration(speed), businessLogic);
+                timeline = new Timeline(frame);
+                timeline.setCycleCount(Timeline.INDEFINITE);
+                timeline.play();
+            }
+
+            System.out.println(timeline.getKeyFrames());
+
             switch (justDirection){
                 case "LEFT":
                     if (direction!="RIGHT") direction = justDirection;
@@ -239,21 +278,38 @@ public class Snake extends Application {
         }
     };
 
+    EventHandler<KeyEvent> trackDoubleSpeed = new EventHandler<KeyEvent>() {
+        @Override
+        public void handle(KeyEvent event) {
+            if (event.getCode().toString().equals("SPACE")){
+                System.out.println("DDDDDDDDDD");
+                speed = 250;
+                frame = new KeyFrame(new Duration(speed), businessLogic);
+                timeline.stop(); // Остановка текущей анимации
+                timeline.getKeyFrames().setAll(frame);
+                doubleSpeed = false;
+            }
+        }
+    };
+
     private boolean isGameOver(){
         boolean isContainHeadInBody = false;
         for (int i = 1; i < SNAKE_BODY.length; i++) {
-            isContainHeadInBody = (SNAKE_BODY[i].equals(SNAKE_HEAD));
+            if (SNAKE_BODY[i].equals(SNAKE_HEAD)){
+                return true;
+            }
         }
 
-        return (SNAKE_HEAD.getX()>COUNT_CELLS
+        return (SNAKE_HEAD.getX()>=COUNT_CELLS
                 || SNAKE_HEAD.getX()<0
-                || SNAKE_HEAD.getY()>COUNT_CELLS
+                || SNAKE_HEAD.getY()>=COUNT_CELLS
                 || SNAKE_HEAD.getY()<0
                 || isContainHeadInBody
                 );
     }
 
     private void gameOver(){
+        status.setText("GAME OVER");
         timeline.stop();
     }
 
@@ -263,7 +319,6 @@ public class Snake extends Application {
                  ((int) (Math.random()*COUNT_CELLS))
         );
         IMAGE_FOOD = new Image("file:pictures/"+ IMAGE_FOODS[((int) (Math.random()*IMAGE_FOODS.length))]);
-        System.out.println(FOOD);
     }
 
     private void drawFood(GraphicsContext context){
@@ -281,4 +336,5 @@ public class Snake extends Application {
         }
         return false;
     }
+
 }
