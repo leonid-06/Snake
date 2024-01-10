@@ -1,7 +1,7 @@
 ### The Snake
 
 A simple snake game in java.
-Using JavaFx to display.  Written on January 24.
+Using JavaFx to display.  Written on January '24.
 If you have any questions of this project - shoot. 
 
 ### How it looks
