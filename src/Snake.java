@@ -306,7 +306,18 @@ public class Snake extends Application {
                  ((int) (Math.random()*COUNT_CELLS)),
                  ((int) (Math.random()*COUNT_CELLS))
         );
-        IMAGE_FOOD = new Image("file:pictures/"+ IMAGE_FOODS[((int) (Math.random()*IMAGE_FOODS.length))]);
+        
+        
+        int random_int = ((int) (Math.random()*IMAGE_FOODS.length));
+
+        // Toggle 1 - If you want to run a program using a Java utility - uncomment this
+        // Toggle 1 - (the preferred)
+        IMAGE_FOOD = new Image("file:pictures/"+ IMAGE_FOODS[random_int]);
+
+        // Toggle 2 - If you want to create jar file from this program, and booting recourses from jar file - uncomment this
+        //IMAGE_FOOD = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
+        //String path = "/pictures/" + IMAGE_FOODS[random_int];
+        
     }
 
     private void drawFood(GraphicsContext context){
